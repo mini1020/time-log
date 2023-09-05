@@ -1,0 +1,26 @@
+version: '3'
+services:
+  api:
+    build: ./backend/ # backend配下のDockerfileを基にイメージをビルドする
+    command: /bin/sh -c "rm -f tmp/pids/server.pid && bundle exec rails s -p 3000 -b '0.0.0.0'"
+    volumes:
+      - ./backend:/api # backendディレクトリをコンテナ内のapiディレクトリにマウントする
+    ports:
+      - 3001:3000 # Reactで3000番ポートを使用したいので、apiは3001番ポートを使用するよう指定
+    depends_on: # サービスの依存関係
+      - db # 起動時はdb→apiの順に起動、停止時はapi→dbの順に停止
+    tty: true
+    stdin_open: true
+  db:
+    image: mysql:latest # 最新のMySQLイメージを指定
+    command: mysqld --character-set-server=utf8 --collation-server=utf8_unicode_ci # 文字化け防止にUTF8を指定
+    volumes:
+      - db-volume:/var/lib/mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: password
+      TZ: "Asia/Tokyo"
+    ports:
+      - "3306:3306"
+  
+volumes:
+  db-volume: # コンテナを作り直してもdbのデータが残る
